@@ -1,7 +1,7 @@
 <?php
 
-    $DB_TYPE = '_DB_TYPE_';
-    $DB_HOST = '_DB_HOST_';
-    $DB_NAME = '_DB_NAME_';
-    $DB_USER = '_DB_USER_';
-    $DB_PASS = '_DB_PASSWORD_';
+$DB_TYPE = '_DB_TYPE_';
+$DB_HOST = '_DB_HOST_';
+$DB_NAME = '_DB_NAME_';
+$DB_USER = '_DB_USER_';
+$DB_PASS = '_DB_PASSWORD_';

@@ -1,11 +1,11 @@
 <?php
-    require_once("settings.inc");    
+    require_once("settings.inc");
 
-    if(file_exists($config_file_path)){        
+    if(file_exists($config_file_path)){
 		header("location: ".$application_start_file);
         exit;
 	}
-        
+
     ob_start();
     @phpinfo(-1);
     $phpinfo = array('phpinfo' => array());
@@ -39,7 +39,7 @@
 <tr>
     <td class=text valign=top>
         <h2>New Installation of <?php echo $application_name;?>!</h2>
-        
+
         Follow the wizard to setup your database.<BR><BR>
         <table width="100%" cellspacing=0 cellpadding=0 border=0>
         <tbody>
@@ -50,7 +50,7 @@
                 <tr>
                     <td></td>
                     <td align=middle>
-                        
+
                         <table width="100%" cellspacing=0 cellpadding=0 border=0>
                         <tbody>
                         <tr>
@@ -59,13 +59,13 @@
                         </tbody>
                         </table>
                         <br />
-						
+
 						<table class="central" width="100%" cellspacing=0 cellpadding=0 border=0>
                         <tbody>
                         <tr>
                             <td class=text align=left>
                                 <ul style="padding-left:0px;">
-									<li>System: <?php echo $phpinfo['phpinfo']['System'];?></li>                                    
+									<li>System: <?php echo $phpinfo['phpinfo']['System'];?></li>
                                     <li>PHP version: <?php echo function_exists('phpversion') ? phpversion() : ''; ?></li>
                                     <li>Server API: <?php echo $phpinfo['phpinfo']['Server API'];?></li>
                                     <li>Safe Mode: <?php echo $phpinfo[$php_core_index]['safe_mode'][0];?></li>
@@ -75,7 +75,7 @@
 						</tbody>
                         </table>
 						<br />
-						
+
                         <table class="text" width="100%" border="0" cellspacing="0" cellpadding="2">
                         <tr>
                             <td align='left'>
@@ -96,12 +96,12 @@
         </TBODY>
         </TABLE>
 		<br />
-		
-        <?php include_once("footer.php"); ?>        
+
+        <?php include_once("footer.php"); ?>
     </TD>
 </TR>
 </TBODY>
 </TABLE>
-                  
+
 </body>
 </html>
