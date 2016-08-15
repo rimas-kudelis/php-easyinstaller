@@ -15,10 +15,15 @@
 		header('location: install.php');
         exit;
     }else{
+        $database_type      = isset($_POST['database_type']) ? $_POST['database_type'] : "";
 		$database_host		= isset($_POST['database_host']) ? $_POST['database_host'] : "";
 		$database_name		= isset($_POST['database_name']) ? $_POST['database_name'] : "";
-		$database_username	= isset($_POST['database_username']) ? prepare_input($_POST['database_username']) : "";
+		$database_username	= isset($_POST['database_username']) ? $_POST['database_username'] : "";
 		$database_password	= isset($_POST['database_password']) ? $_POST['database_password'] : "";
+
+		if(empty($database_type)){
+			$error_mg[] = "Database type can not be empty! Please re-enter.";
+		}
 
 		if(empty($database_host)){
 			$error_mg[] = "Database host can not be empty! Please re-enter.";
@@ -38,34 +43,38 @@
 
 		if($error_mg != ''){
 			$config_file = file_get_contents($config_file_default);
+			$config_file = str_replace("_DB_TYPE_", $database_type, $config_file);
 			$config_file = str_replace("_DB_HOST_", $database_host, $config_file);
 			$config_file = str_replace("_DB_NAME_", $database_name, $config_file);
 			$config_file = str_replace("_DB_USER_", $database_username, $config_file);
 			$config_file = str_replace("_DB_PASSWORD_", $database_password, $config_file);
-			
-			$link = @mysql_connect($database_host, $database_username, $database_password);
-			if($link){					
-				if(@mysql_select_db($database_name)){
-					$f = @fopen($config_file_path, "w+");
-					if(@fwrite($f, $config_file) > 0){
-						if(false == ($db_error = apphp_db_install($database_name, $sql_dump))){
-							$error_mg[] = "Could not read file ".$sql_dump."! Please check if the file exists.";                            
-							@unlink($config_file_path);
-						}else{
-							// additional operations, like setting up admin passwords etc.
-							// ...
-							$completed = true;                            
-						}						
-					}else{				
-						$error_mg[] = "Can not open configuration file ".$config_file_directory.$config_file_name;				
-					}
-					@fclose($f);
-				}else{
-					$error_mg[] = "Database connecting error! Check your database exists.</span><br/>";
-				}
-			}else{
-				$error_mg[] = "Database connecting error! Check your connection parameters.</span><br/>";
-			}			
+
+            $dsn = "$database_type:host=$database_host;dbname=$database_name";
+            $dboptions = [];
+            try {
+                $dbh = new PDO($dsn, $database_username, $database_password, $dboptions);
+                //$dbh->setAttribute($dbh::ATTR_DEFAULT_FETCH_MODE, $dbh::FETCH_ASSOC);
+
+                $f = @fopen($config_file_path, "w+");
+                if(@fwrite($f, $config_file) > 0){
+                    try {
+                        apphp_db_install($dbh, $database_name, $sql_dump);
+                        // additional operations, like setting up admin passwords etc.
+                        // ...
+                        $completed = true;
+                    } catch (Exception $e) {
+                        $error_mg[] = $e->getMessage();
+                        @unlink($config_file_path);
+                    }
+                } else {
+                    $error_mg[] = "Can not open configuration file ".$config_file_directory.$config_file_name . " for writing.";
+                }
+                @fclose($f);
+
+
+            } catch (PDOException $e) {
+                $error_mg[] = "Database connection error! Check your connection parameters.<br/>Error message: " . $e->getMessage();
+            }
 		}
 	}
 
@@ -164,113 +173,76 @@
 </html>
 <?php
 
-function apphp_db_install($database, $sql_file) {
-    $db_error = false;  
-    if(!@apphp_db_select_db($database)){
-        if (@apphp_db_query('create database '.$database)){
-          apphp_db_select_db($database);
-        } else {
-          $db_error = mysql_error();
-          return false;		
-        }
+function apphp_db_install($dbh, $database_name, $sql_file)
+{
+    // PostgreSQL does not provide a "SELECT DATABASE" statement. For this reason DB
+    // selection and creation is not currently possible. Should it ever become possible,
+    // this block should throw an Exception instead of returning false on failure.
+    //
+    // if(!@apphp_db_select_db($database_name)){
+    //     if (@apphp_db_query('create database '.$database)){
+    //       apphp_db_select_db($database);
+    //     } else {
+    //       $db_error = mysql_error();
+    //       return false;
+    //     }
+    // }
+
+    if(is_readable($sql_file)){
+        $fd = fopen($sql_file, 'rb');
+        $restore_query = fread($fd, filesize($sql_file));
+        fclose($fd);
+    } else {
+        throw new Exception('SQL dump file does not exist or is not readable: ' . $sql_file);
     }
-  
-    if(!$db_error){
-        if(file_exists($sql_file)){
-          $fd = fopen($sql_file, 'rb');
-          $restore_query = fread($fd, filesize($sql_file));
-           fclose($fd);
-        } else {
-            $db_error = 'SQL file does not exist: ' . $sql_file;
-            return false;
+
+    $sql_array = array();
+    $sql_length = strlen($restore_query);
+    $pos = strpos($restore_query, ';');
+    for ($i=$pos; $i<$sql_length; $i++) {
+        if ($restore_query[0] == '#') {
+            $restore_query = ltrim(substr($restore_query, strpos($restore_query, "\n")));
+            $sql_length = strlen($restore_query);
+            $i = strpos($restore_query, ';')-1;
+            continue;
         }
-        
-        $sql_array = array();
-        $sql_length = strlen($restore_query);
-        $pos = strpos($restore_query, ';');
-        for ($i=$pos; $i<$sql_length; $i++) {
-            if ($restore_query[0] == '#') {
-              $restore_query = ltrim(substr($restore_query, strpos($restore_query, "\n")));
-              $sql_length = strlen($restore_query);
-              $i = strpos($restore_query, ';')-1;
-              continue;
-            }
-            $next = '';
-            if($restore_query[($i+1)] == "\n") {
-                for ($j=($i+2); $j<$sql_length; $j++) {
-                  if (trim($restore_query[$j]) != '') {
-                    $next = substr($restore_query, $j, 6);
-                    if ($next[0] == '#') {
-                      // find out where the break position is so we can remove this line (#comment line)
-                      for ($k=$j; $k<$sql_length; $k++) {
-                        if ($restore_query[$k] == "\n") break;
-                      }
-                      $query = substr($restore_query, 0, $i+1);
-                      $restore_query = substr($restore_query, $k);
-                      // join the query before the comment appeared, with the rest of the dump
-                      $restore_query = $query . $restore_query;
-                      $sql_length = strlen($restore_query);
-                      $i = strpos($restore_query, ';')-1;
-                      continue 2;
+        $next = '';
+        if($restore_query[($i+1)] == "\n") {
+            for ($j=($i+2); $j<$sql_length; $j++) {
+                if (trim($restore_query[$j]) != '') {
+                $next = substr($restore_query, $j, 6);
+                if ($next[0] == '#') {
+                    // find out where the break position is so we can remove this line (#comment line)
+                    for ($k=$j; $k<$sql_length; $k++) {
+                    if ($restore_query[$k] == "\n") break;
                     }
-                    break;
-                  }
-                }
-                if($next == ''){ // get the last insert query
-                    $next = 'insert';
-                }
-                if((preg_match('/create/i', $next)) || (preg_match('/insert/i', $next)) || (preg_match('/drop t/i', $next))){
-                    $next = '';
-                    $sql_array[] = substr($restore_query, 0, $i);
-                    $restore_query = ltrim(substr($restore_query, $i+1));
+                    $query = substr($restore_query, 0, $i+1);
+                    $restore_query = substr($restore_query, $k);
+                    // join the query before the comment appeared, with the rest of the dump
+                    $restore_query = $query . $restore_query;
                     $sql_length = strlen($restore_query);
                     $i = strpos($restore_query, ';')-1;
+                    continue 2;
+                }
+                break;
                 }
             }
+            if($next == ''){ // get the last insert query
+                $next = 'insert';
+            }
+            if((preg_match('/create/i', $next)) || (preg_match('/insert/i', $next)) || (preg_match('/drop t/i', $next))){
+                $next = '';
+                $sql_array[] = substr($restore_query, 0, $i);
+                $restore_query = ltrim(substr($restore_query, $i+1));
+                $sql_length = strlen($restore_query);
+                $i = strpos($restore_query, ';')-1;
+            }
         }
-  
-        for ($i=0; $i<sizeof($sql_array); $i++) {
-          apphp_db_query($sql_array[$i]);
+    }
+
+    for ($i=0; $i<sizeof($sql_array); $i++) {
+        if ($dbh->exec($sql_array[$i]) === false) {
+            throw new Exception($dbh->errorInfo()[2]);
         }
-        return true;
-    }else{
-        return false;
     }
 }
-
-function apphp_db_select_db($database) {
-    return mysql_select_db($database);
-}
-
-function apphp_db_query($query) {
-    global $link;
-    $res=mysql_query($query, $link);
-    return $res;
-}
-
-/**
- *	Remove bad chars from input
- *	  	@param $str_words - input
- **/
-function prepare_input($str_words, $escape = false, $level = 'high'){
-    $found = false;
-    $str_words = htmlentities(strip_tags($str_words));
-    if($level == 'low'){
-        $bad_string = array('drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');
-    }else if($level == 'medium'){
-        $bad_string = array('select', 'drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');
-    }else{
-        $bad_string = array('select', 'drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<img', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'http://', 'https://', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');
-    }
-    for($i = 0; $i < count($bad_string); $i++){
-        $str_words = str_replace($bad_string[$i], '', $str_words);
-    }
-
-    if($escape){
-        $str_words = mysql_real_escape_string($str_words);
-    }
-
-    return $str_words;
-}
-
-?>

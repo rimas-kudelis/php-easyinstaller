@@ -52,6 +52,15 @@
                         <table class="central text" width="100%" border="0" cellspacing="0" cellpadding="2" class="main_text">
                         <tr>
                             <tr>
+                                <td>&nbsp;Database Type</td>
+                                <td>
+                                    <select name="database_type">
+                                        <option value="mysql">MySQL</option>
+                                        <option value="pgsql">PostgreSQL</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td>&nbsp;Database Host</td>
                                 <td>
                                     <input type="text" class="form_text" name="database_host" value='localhost' size="30">
