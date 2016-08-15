@@ -67,7 +67,7 @@
                         @unlink($config_file_path);
                     }
                 } else {
-                    $error_mg[] = "Can not open configuration file ".$config_file_directory.$config_file_name . " for writing.";
+                    $error_mg[] = "Can not open configuration file ".$config_file_path . " for writing.";
                 }
                 @fclose($f);
 
