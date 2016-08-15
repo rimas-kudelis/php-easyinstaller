@@ -27,7 +27,7 @@
 <html>
 <head>
 	<title>Installation Guide</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=windows-1251" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="author" content="ApPHP Company - Advanced Power of PHP">
     <meta name="generator" content="ApPHP EasyInstaller">
 	<link rel="stylesheet" type="text/css" href="img/styles.css">

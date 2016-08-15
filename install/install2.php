@@ -1,42 +1,42 @@
 <?php
 
-    require_once("settings.inc");    
-    
-    if(file_exists($config_file_path)){        
+    require_once("settings.inc");
+
+    if(file_exists($config_file_path)){
 		header("location: ".$application_start_file);
         exit;
 	}
-    
+
 	$completed = false;
-	$error_mg  = array();	
+	$error_mg  = array();
 	$submit = isset($_POST['submit']) ? stripcslashes($_POST['submit']) : '';
-	
+
 	if($submit != 'step2'){
 		header('location: install.php');
-        exit;        
-    }else{        
+        exit;
+    }else{
 		$database_host		= isset($_POST['database_host']) ? $_POST['database_host'] : "";
 		$database_name		= isset($_POST['database_name']) ? $_POST['database_name'] : "";
 		$database_username	= isset($_POST['database_username']) ? prepare_input($_POST['database_username']) : "";
 		$database_password	= isset($_POST['database_password']) ? $_POST['database_password'] : "";
-		
+
 		if(empty($database_host)){
-			$error_mg[] = "Database host can not be empty! Please re-enter.";	
+			$error_mg[] = "Database host can not be empty! Please re-enter.";
 		}
-		
+
 		if(empty($database_name)){
-			$error_mg[] = "Database name can not be empty! Please re-enter.";	
+			$error_mg[] = "Database name can not be empty! Please re-enter.";
 		}
-		
+
 		if(empty($database_username)){
-			$error_mg[] = "Database username can not be empty! Please re-enter.";	
+			$error_mg[] = "Database username can not be empty! Please re-enter.";
 		}
-		
+
 		if(empty($database_password)){
-			$error_mg[] = "Database password can not be empty! Please re-enter.";	
+			$error_mg[] = "Database password can not be empty! Please re-enter.";
 		}
-		
-		if($error_mg != ''){		
+
+		if($error_mg != ''){
 			$config_file = file_get_contents($config_file_default);
 			$config_file = str_replace("_DB_HOST_", $database_host, $config_file);
 			$config_file = str_replace("_DB_NAME_", $database_name, $config_file);
@@ -68,8 +68,8 @@
 			}			
 		}
 	}
-        
-?>	
+
+?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
@@ -80,13 +80,13 @@
 	<link rel="stylesheet" type="text/css" href="img/styles.css">
 </head>
 <BODY text=#000000 vLink=#2971c1 aLink=#2971c1 link=#2971c1 bgColor=#ffffff>
-<br><br>    
+<br><br>
 <TABLE align="center" width="70%" cellSpacing=0 cellPadding=2 border=0>
 <TBODY>
 <TR>
     <TD class=text vAlign=top>
         <H2>New Installation of <?php echo $application_name;?>!</H2>
-        
+
         Follow the wizard to setup your database.<BR><BR>
         <table width="100%" cellspacing=0 cellpadding=0 border=0>
         <tbody>
@@ -100,15 +100,15 @@
 
                         <table class="central" width="100%" cellspacing=0 cellpadding=0 border=0>
                         <tbody>
-						<?php if(!$completed){							
+						<?php if(!$completed){
 							foreach($error_mg as $msg){
 								echo "<tr><td class=text align=left><span style='color:#bb5500;'>&#8226; ".$msg."</span></td></tr>";
 							}
 						?>
-							</tbody>	
+							</tbody>
 							</table>
 							<br />
-						
+
 							<table class="text" width="100%" border="0" cellspacing="0" cellpadding="2">
 							<tr>
 								<td align='left'>
@@ -118,14 +118,14 @@
 								</td>
 							</tr>
 							</table>
-							
+
 						<?php } else {?>
 							<tr>
 								<td class=text align=left>
 									<b>Step 2. Installation Completed</b>
 								</td>
 							</tr>
-							<tr><td>&nbsp;</td></tr>	
+							<tr><td>&nbsp;</td></tr>
 							<tr>
 								<TD class=text align=left>
 									The <?php echo $config_file_path;?> file was sucessfully created.
@@ -137,12 +137,12 @@
 									<?php if($application_start_file != ""){ ?><A href="<?php echo $application_start_file;?>">Proceed to login page</A><?php } ?>
 								</td>
 							</tr>
-							</tbody>						
-							</table>                        
+							</tbody>
+							</table>
 							<br />
 						<?php } ?>
-                        
-						
+
+
 
 					</td>
                     <td></td>
@@ -154,8 +154,8 @@
         </tbody>
         </table>
 		<br />
-				
-		<?php include_once("footer.php"); ?>        
+
+		<?php include_once("footer.php"); ?>
     </td>
 </tr>
 </tbody>
@@ -258,19 +258,19 @@ function prepare_input($str_words, $escape = false, $level = 'high'){
     if($level == 'low'){
         $bad_string = array('drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');
     }else if($level == 'medium'){
-        $bad_string = array('select', 'drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');		
+        $bad_string = array('select', 'drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');
     }else{
         $bad_string = array('select', 'drop', '--', 'insert', 'xp_', '%20union%20', '/*', '*/union/*', '+union+', 'load_file', 'outfile', 'document.cookie', 'onmouse', '<script', '<iframe', '<applet', '<meta', '<style', '<form', '<img', '<body', '<link', '_GLOBALS', '_REQUEST', '_GET', '_POST', 'include_path', 'prefix', 'http://', 'https://', 'ftp://', 'smb://', 'onmouseover=', 'onmouseout=');
     }
     for($i = 0; $i < count($bad_string); $i++){
         $str_words = str_replace($bad_string[$i], '', $str_words);
     }
-    
+
     if($escape){
-        $str_words = mysql_real_escape_string($str_words); 
+        $str_words = mysql_real_escape_string($str_words);
     }
-    
+
     return $str_words;
 }
-  
+
 ?>
